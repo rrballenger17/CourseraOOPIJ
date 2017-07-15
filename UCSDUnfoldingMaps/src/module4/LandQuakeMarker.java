@@ -34,6 +34,26 @@ public class LandQuakeMarker extends EarthquakeMarker {
 		
 		// TODO: Implement this method
 		
+		pg.pushStyle();
+		
+		
+		float mag = this.getMagnitude();
+		
+		int size = 0;
+		
+		if(mag > this.THRESHOLD_MODERATE){
+			size = 12;
+		}else if(mag > this.THRESHOLD_LIGHT){
+			size = 8;
+		}else{
+			size = 4;
+		}
+		
+		pg.ellipse(x-size/2, y-size/2, size, size);
+		
+		pg.popStyle();
+		
+		
 	}
 	
 

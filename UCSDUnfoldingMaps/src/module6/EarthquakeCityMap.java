@@ -2,6 +2,7 @@ package module6;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
@@ -44,7 +45,7 @@ public class EarthquakeCityMap extends PApplet {
 	
 
 	//feed with magnitude 2.5+ Earthquakes
-	private String earthquakesURL = "http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
+	private String earthquakesURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
 	
 	// The files containing city names and info and country names and info
 	private String cityFile = "city-data.json";
@@ -85,7 +86,7 @@ public class EarthquakeCityMap extends PApplet {
 		//earthquakesURL = "test2.atom";
 		
 		// Uncomment this line to take the quiz
-		//earthquakesURL = "quiz2.atom";
+		earthquakesURL = "quiz2.atom";
 		
 		
 		// (2) Reading in earthquake data and geometric properties
@@ -124,8 +125,39 @@ public class EarthquakeCityMap extends PApplet {
 	    map.addMarkers(quakeMarkers);
 	    map.addMarkers(cityMarkers);
 	    
+	    sortAndPrint(1000);
 	    
 	}  // End setup
+	
+	
+	@Override
+	public  void keyPressed(){
+		
+		System.out.println(key);
+
+		int input = -1;
+		
+		
+	
+		
+		
+		try{
+			input = Integer.parseInt(key + "");
+		}catch(Exception e){
+			for(Marker em: quakeMarkers){
+				em.setHidden(false);
+			}
+			return;
+		}
+		
+		
+		for(Marker em: quakeMarkers){
+			int mag = (int) ((EarthquakeMarker)em).getMagnitude();
+			em.setHidden(mag != input);
+		}
+			
+		
+	}
 	
 	
 	public void draw() {
@@ -137,7 +169,21 @@ public class EarthquakeCityMap extends PApplet {
 	
 	
 	// TODO: Add the method:
-	//   private void sortAndPrint(int numToPrint)
+	private void sortAndPrint(int numToPrint){
+		
+		//List<Marker> quakeMarkers
+		Object[] array = quakeMarkers.toArray();
+		
+		Arrays.sort(array);
+		
+		for(int i=0; i<numToPrint && i<array.length; i++){
+			EarthquakeMarker em = (EarthquakeMarker) array[i];
+			System.out.println(em.getTitle());
+		}
+		
+	}
+	
+	
 	// and then call that method from setUp
 	
 	/** Event handler that gets called automatically when the 

@@ -47,18 +47,18 @@ public class EarthquakeCityMap extends PApplet {
 	private UnfoldingMap map;
 	
 	//feed with magnitude 2.5+ Earthquakes
-	private String earthquakesURL = "http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
+	private String earthquakesURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
 
 	
 	public void setup() {
-		size(950, 600, OPENGL);
+		size(1250, 650, OPENGL);
 
 		if (offline) {
 		    map = new UnfoldingMap(this, 200, 50, 700, 500, new MBTilesMapProvider(mbTilesString));
 		    earthquakesURL = "2.5_week.atom"; 	// Same feed, saved Aug 7, 2015, for working offline
 		}
 		else {
-			map = new UnfoldingMap(this, 200, 50, 700, 500, new Google.GoogleMapProvider());
+			map = new UnfoldingMap(this, 200, 50, 1050, 500, new Google.GoogleMapProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 			//earthquakesURL = "2.5_week.atom";
 		}
@@ -83,6 +83,11 @@ public class EarthquakeCityMap extends PApplet {
 	    	// PointFeatures also have a getLocation method
 	    }
 	    
+	    for(PointFeature pf : earthquakes){
+	    	SimplePointMarker m = createMarker(pf);
+	    	map.addMarker(m);
+	    }
+	    
 	    // Here is an example of how to use Processing's color method to generate 
 	    // an int that represents the color yellow.  
 	    int yellow = color(255, 255, 0);
@@ -95,8 +100,29 @@ public class EarthquakeCityMap extends PApplet {
 	// TODO: Implement this method and call it from setUp, if it helps
 	private SimplePointMarker createMarker(PointFeature feature)
 	{
+		
+		SimplePointMarker m = new SimplePointMarker(feature.getLocation());
+		
+		Object magObj = feature.getProperty("magnitude");
+    	float mag = Float.parseFloat(magObj.toString());
+    	
+    	m.setRadius(10);
+    	m.setColor(150);
+    	
+    	if(mag < THRESHOLD_LIGHT){
+    		m.setColor(color(0,0,255));
+    		m.setRadius(5);
+    	}else if(mag < THRESHOLD_MODERATE){
+    		m.setColor(color(255, 255, 0));
+    		m.setRadius(10);
+    	}else{
+    		m.setColor(color(255, 0, 0));
+    		m.setRadius(15);
+    	}
+		
+    	
 		// finish implementing and use this method, if it helps.
-		return new SimplePointMarker(feature.getLocation());
+		return m;
 	}
 	
 	public void draw() {
@@ -112,5 +138,31 @@ public class EarthquakeCityMap extends PApplet {
 	{	
 		// Remember you can use Processing's graphics methods here
 	
+		fill(color(255, 255, 255));
+		rect(30, 50, 130, 200);
+		
+		fill(0);
+		text("Earthquake Key", 45, 70);
+		
+		
+		
+		fill(color(0,0,255));
+		ellipse(55, 100, 5, 5);
+		fill(0);
+		text("Below 4.0", 75, 105);
+		
+		
+		fill(color(255, 255, 0));
+		ellipse(55, 150, 10, 10);
+		fill(0);
+		text("4.0+", 75, 155);
+		
+		fill(color(255, 0, 0));
+		ellipse(55, 200, 15, 15);
+		fill(0);
+		text("5.0+", 75, 205);
+		
+		
+		
 	}
 }
