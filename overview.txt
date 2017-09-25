@@ -1,0 +1,320 @@
+
+1. Overview: 
+My project is a program that runs the network cascade model and it supports 2 or more selection options per user, provides percentage change for each option per generation, determines the number of generations until designated nodes pick a specific option, and lastly provides aggregate statistics. 
+
+
+2. Data:
+Facebook data
+- It is Facebook data that shows connections or friendships. 
+- It was provided in the week 1 programming assignment. 
+- I'll represent it as nodes and edges as in the week 1 assignment. 
+     - Each node will be saved in a hashmap and the value with be an array list containing its connections. 
+- There are 2000 nodes and approximately 15,000 edges. 
+
+3. Questions:
+
+Easy question: What would the selection graph look like after one generation when each node is randomly assigned 1 of 2 options. 
+
+Hard question: What would the selection graph look like after a user-specified number of generations, when there are 2 or more options per node. Also what are the percentage changes in the number of nodes selecting each available option and after how many generations will a desiganted set of nodes all select a particular option?
+
+4. Algorithms, Data Structures, and Answer to your Question: 
+Give the algorithms and data structures you implemented and used. 
+
+Generational Algorithm (hard problem):
+- A new, empty graph is created. 
+- For each node in the graph, count all the connections by the other node's selection number.
+- For each type of selection among the neighbors, multiply the count by the benefit factor. 
+- For each node, choose the selection with the greatest reward based on the largst benefit factor * number of neighbors making that selection.
+- If there's a tie, randomly choose one of the top-ranked options. 
+- Insert each node's new choice into the empty graph.
+- Before replacing the old graph, count all nodes and find the percentage change of each selection.
+- Iterate through the designated nodes to determine if they made a certain selection.
+- Update each node with its new selection. 
+
+Generational Algorithm (easy problem):
+- It's a significantly reduced and less robust version of the hard problem algorithm. 
+- It only handles two selections, performs one iteration, and doesn't analyze the state. 
+
+Graph data structure:
+- It's a hashmap with entries as the node id and an instance of the node class. 
+	- The nodes are quickly accessible by id. 
+	- The node class holds the selection, the id, and the connections for each node. 
+- The designated node IDs are held in an array list since they're simply iterated. 
+- The graph class is an abstract class that's implemented by the other graph classes. 
+	- This enables the loader from the assignment 2 codebase to work for the system. 
+- The test simulation runs in the Tests.java class and doesn't have any significant data structure. 
+
+In a few sentences describe how the algorithms you implemented and the code you wrote allowed you to answer the question you listed. 
+- The graph data structure provided efficient access to the node data that was used. By using a hashmap, each node was accessible in constant time. Also each node was implemented with a class because it had several data items to track including selection, id, and connections. 
+- The generational algorithm worked well to process each node and determine its future state. Because each node contains its connection within the node class in a hashset, it's easy to get the connections set and quickly determine the neighbors' selections with the graph hashset. After tallying the counts, the algorithm enabled having both the previous and future states and provided the information necessary to run the analysis for the overall statistics. 
+
+Also include the answers to the questions you asked on the data set you analyzed.
+The answer to the question depends on the graph that is analyzed. For example, one state that was used repeatedly during development had approximately 15 thousand nodes, ran 10 generations, had 3 selections options for all the nodes, and monitored the nodes numbered 11, 24, 35, 40, 52, 67, and 71. See hard problem answers below:
+
+
+What would the selection graph look like after a user-specified number of generations, when there are 2 or more options per node. 
+	After 10 generations 14926 nodes selected option 1, 16 selected 1 and 6 selected 2. At the beginning approximately 5000 selected each option. The network cascaded.
+
+Also what are the percentage changes in the number of nodes selecting each available option?
+	For each generation, option 1 increased or stayed the same and the other decreased or stayed the same. The largest change was in generation 3 when option 1 increased by 39.99%. The largst drop was in generation 5 when option 0 decreased by 88.31%. The rest of the changes per generation are pasted at the end. 
+
+After how many generations will a desiganted set of nodes all select a particular option?
+	In this case, after 5 generations the nodes 11, 24, 35, 40, 52, 67, and 71 had all selected option 1. 
+
+
+5. Algorithm analysis: State and justify the running time of at least your main algorithm. If you did not include detailed code or pseudocode in your answer to part 4 which you are analyzing here, you should include code or pseudocode here on which you will do your analysis. Unlike in the project proposal, here we want you to actually trace through code or pseudocode to justify the Big-O running time, like you did in Course 2, Week 2, Lesson 2:
+
+
+
+
+
+	// Calculates the total benefit for each possible option. 
+	// The total benefit is the number of neighbors choosing the
+	// option multiplied by the benefit factor. If there is a tie, 
+	// it randomly chooses on the top options. This is important
+	// because simply choosing the lowest numbered option will 
+	// impact the results. 
+	private int getNewChoice(Map<Integer, Integer> neighsChoices) {
+		
+- This entire method is measured as a constant  runtime complexity 
+	for each node and is calculated into the total where the method is called
+
+		// map of total benefit for each option
+		Map<Integer, Double> benefitAmounts = new HashMap<Integer, Double>();
+					
+		double topBenefit = -1;
+					
+		// list of options with maximum benefit
+		List<Integer> finalist = new ArrayList<Integer>();
+		
+		// find the options with the top benefit
+		// and also make a list of the top ones
+		// if there is a tie
+		for(int option: neighsChoices.keySet()) {
+
+			int selectedCount = neighsChoices.get(option);
+						
+			double benefitFactor = benefitFactors.get(option);
+						
+			double optionBenefit = (selectedCount + 0.0) * benefitFactor; //* benefitFactor; 
+						
+			benefitAmounts.put(option, optionBenefit);
+						
+			if(optionBenefit > topBenefit) {
+				topBenefit = optionBenefit;
+				finalist = new ArrayList<Integer>();
+				finalist.add(option);
+			}else if(optionBenefit == topBenefit) {
+				finalist.add(option);
+			}
+		}
+				
+		// chose from the leading choices
+		// or if there's only 1 top choice, choose it
+		int newChoiceIndex = myRand.nextInt(finalist.size());
+							
+		int newChoice = finalist.get(newChoiceIndex);
+
+		return newChoice;
+		
+	}
+
+
+	// For all the nodes, count the neighbors selections and
+	// determine what the node will select next depending on 
+	// its neighbors and the benefits factors. Counts the total 
+	// amount of neighbors who chose each option. Calls getNewChoice
+	// to determine what the node will do next. Returns the map
+	// of node ids and next generation selections as a hashmap. 
+	private Map<Integer, Integer> getNextGenSelections() {
+		
+
+		// next gen selections
+		Map<Integer, Integer> newSelections = new HashMap<Integer, Integer>();
+
+- for each node is O(n)
+
+		for(int id: graph.keySet()) {
+			
+			Node n = graph.get(id);
+			
+			// total counts of neighbors selections
+			Map<Integer, Integer> neighsChoices = new HashMap<Integer, Integer>();
+
+- for each neighbor is O(n) again, making O(n^2) total
+			
+			// count the node's neighbors by their current choice
+			for(int neigh: n.getConnections()) {
+				
+				int nSelection = graph.get(neigh).getSelection();
+				
+				if(neighsChoices.containsKey(nSelection)) {
+					int newCount = neighsChoices.get(nSelection) + 1;
+					neighsChoices.put(nSelection, newCount);
+				}else {
+					neighsChoices.put(nSelection, 1);
+				}
+			}
+			
+- for each choice for each node, becuase there are usually 5 
+	or less choices, this will be measured as a constant O(c) or O(5).
+	Of course, if the number of options was beyond a constant value like
+	5, then it would become a significant factor in the algorithm complexity. 
+- the total complexity of the algorithm is now O(c * n^2) or O(n^2)
+
+			// send the neighbors counts to getNewChoice
+			// to determine what the node will do next. 
+			int newChoice = getNewChoice(neighsChoices);
+			
+			// save next gen choice
+			newSelections.put(id, newChoice);
+		}
+		
+		return newSelections;
+			
+	}
+
+
+
+	// After determing the state of the graph in the next generation, 
+	// update each node, check the designated nodes for the specified selection,
+	// and measure and print the percentage change of each selection
+	private void updateNodesAndMeasureChange(Map<Integer, Integer> newSelections, int howManyGens) {
+		
+- Replace each node's selection and count them before and after the
+	generation in addition to checking the designated nodes. That 
+	process has a complexity of O(n + n + n + n ) or O(4n)
+
+		Map<Integer, Integer> beforeCounts = countNodesPerSelection();
+		
+		// update nodes with next gen choice
+		for(int id: newSelections.keySet()) {
+			graph.get(id).setSelection(newSelections.get(id));
+		}
+		
+		Map<Integer, Integer> afterCounts = countNodesPerSelection();
+		
+		checkDesignatedNodes(howManyGens);
+		
+		providePercentageChange(howManyGens, beforeCounts, afterCounts);			
+	}
+
+
+
+	// Execute a generation including finding the new state
+	// of the board, checking the designated nodes, and calculating
+	// the percentage changes.
+	public void generation(int howManyGens) {
+		
+- From the measurements above, the algorithm has an overall complexity 
+	of O(n^2 + n) after summing the components and ignoring the constant values.
+
+		// next gen selections
+		Map<Integer, Integer> newSelections = getNextGenSelections();
+			
+		// update nodes and print percentage changes
+		updateNodesAndMeasureChange(newSelections, howManyGens);
+
+	}
+
+
+Overall the generational algorithm used to solve the hard problem has a 
+complexity of O(n^2 + n). That's because each node must be analyzed along with
+checking the selection of all its neighbors which amounts to O(n^2). The remainder
+of the algorithm involves processing each node and the overall statistics which is
+measured as O(4n). After summing the components and dividing out constant values
+which don't significantly affect the total complexity, the algorithm has a big-O 
+running time of O(n^2 + n) or simply O(n^2) in its most reduced form. 
+
+
+
+6. Correctness verification:
+
+There is a function that prints the state of all the nodes including the node IDs and their current selection. After running 10 generations in the hard-problem algorithm and being given the overall stats, the state of each node was printed and verified. Additionally, I found the neighbors for a particular node, printed their choice, manually solved the decision algorithm to determine the reward for each choice, and checked that the algorithm correctly solved each node's state for the next generation. 
+
+I ran approximately 10 generations repeatedly to check that each cascade whether to option 1, 2 or 3 since I used 3 options occurred equally. At first, it did not and it was because ties were delt with by assigning the lowest selection from the top-ranking options. Then, I developed the mechanism to randomly choose from the top options which made the outcomes equal. 
+
+Another simple mechanism to test for correctness was printing the user input options. After each user input, whether a list of nodes, number of generations, or anything else, the aggregate user input information is printed in an orderly and informative way to confirm that the data was ingested and is stored properly. 
+
+
+7. My focus changed from looking at how each node changes compared to its neighbors to how the graph changes as a whole and communicating the overall state to the user. After solving the single generation step in the easy problem, I developed features that give the user better meta-analysis of the whole graph. By determining percentage changes per generation, the pace of change of the cascading selection optin is captured and communicated to the user. Also instead of running the simulation infinitely or until equilibrium, it runs how ever many times the user decides. This layout prevents infinite loops if the graph never reaches equilibrium and still allows the user to idenify when a constant state is reached through the percentage change measurements. Also the user can designate a group of nodes to determine when they reach of particular state. This enables the user to track a larger group of friends in comparison to the statistics for the overall graph, rather than only a single node. 
+
+
+
+
+
+Results form the network cascade model:
+
+Initial selections counts:
+Selection: 0 Count: 4993
+Selection: 1 Count: 5030
+Selection: 2 Count: 4925
+
+Changes for generation 1
+Option 0: -8.49 %
+Option 1: 16.02 %
+Option 2: -7.76 %
+
+
+Changes for generation 2
+Option 0: -24.93 %
+Option 1: 33.81 %
+Option 2: -18.36 %
+
+
+Changes for generation 3
+Option 0: -49.48 %
+Option 1: 39.99 %
+Option 2: -38.45 %
+
+
+Changes for generation 4
+Option 0: -71.38 %
+Option 1: 23.41 %
+Option 2: -57.91 %
+
+
+Changes for generation 5
+Option 0: -88.31 %
+Option 1: 8.75 %
+Option 2: -77.21 %
+
+
+Changes for generation 6
+Option 0: -70.69 %
+Option 1: 1.57 %
+Option 2: -86.76 %
+
+
+Changes for generation 7
+Option 0: -5.88 %
+Option 1: 0.13 %
+Option 2: -65.52 %
+
+
+Changes for generation 8
+Option 0: 0.00 %
+Option 1: 0.03 %
+Option 2: -40.00 %
+
+
+Changes for generation 9
+Option 0: 0.00 %
+Option 1: 0.00 %
+Option 2: 0.00 %
+
+
+Changes for generation 10
+Option 0: 0.00 %
+Option 1: 0.00 %
+Option 2: 0.00 %
+
+Final Selection Counts
+Selection: 0 Count: 16
+Selection: 1 Count: 14926
+Selection: 2 Count: 6
+
+After 5 generations the
+designated group of nodes
+have all selected option 1.
+
